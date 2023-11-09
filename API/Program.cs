@@ -23,11 +23,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles();   //return static files
-
 app.UseCors("AngularAppPolicy");
 
 app.UseAuthorization();
+
+app.UseStaticFiles();   //return static files
 
 app.MapControllers();
 

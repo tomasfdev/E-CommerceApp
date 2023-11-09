@@ -41,9 +41,9 @@ namespace API.Extensions
 
             services.AddCors(options =>
             {
-                options.AddPolicy("AngularAppPolicy", policy =>
+                options.AddPolicy(name: "AngularAppPolicy", policy =>
                 {
-                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200");
+                    policy.WithOrigins("https://localhost:4200").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                 });
             });
 
