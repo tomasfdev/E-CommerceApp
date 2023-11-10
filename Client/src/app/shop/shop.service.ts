@@ -33,6 +33,10 @@ export class ShopService {
     });
   }
 
+  getProduct(id: number) {
+    return this.http.get<Product>(this.apiUrl + 'products/' + id);
+  }
+
   getBrands() {
     return this.http.get<Brand[]>(this.apiUrl + 'products/brands');
   }
