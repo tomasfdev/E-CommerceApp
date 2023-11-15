@@ -1,4 +1,5 @@
 ﻿using API.Dtos;
+using API.Errors;
 using API.Helpers;
 using AutoMapper;
 using Core.Interfaces;
@@ -47,6 +48,8 @@ namespace API.Controllers
             var spec = new ProductsWithTypesAndBrandsSpec(id);
 
             var product = await _productRepo.GetEntityWithSpecAsync(spec);
+
+            if (product == null) return NotFound(new ApiResponse(404));
 
             return Ok(_mapper.Map<ProductDto>(product));
         }
