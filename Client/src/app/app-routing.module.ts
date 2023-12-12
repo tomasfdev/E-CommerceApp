@@ -12,6 +12,8 @@ const routes: Routes = [
   { path: 'server-error', component: ServerErrorComponent },
   { path: 'contact', component: TestErrorComponent },
   { path: 'shop', loadChildren: () => import('./shop/shop.module').then(m => m.ShopModule) }, //lazy loading !
+  { path: 'basket', loadChildren: () => import('./basket/basket.module').then(m => m.BasketModule) }, //lazy loading !
+  { path: 'checkout', loadChildren: () => import('./checkout/checkout.module').then(m => m.CheckoutModule) }, //lazy loading !
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
 
