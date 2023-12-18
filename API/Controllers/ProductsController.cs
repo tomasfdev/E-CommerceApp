@@ -51,7 +51,7 @@ namespace API.Controllers
 
             if (product == null) return NotFound(new ApiResponse(404));
 
-            return Ok(_mapper.Map<ProductDto>(product));
+            return _mapper.Map<ProductDto>(product);
         }
 
         [HttpGet("brands")]
