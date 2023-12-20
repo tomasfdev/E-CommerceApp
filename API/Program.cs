@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AppServices(builder.Configuration);
 builder.Services.IdentityServices(builder.Configuration);
+builder.Services.AddSwaggerDocumentaion();
 
 var app = builder.Build();
 
@@ -21,11 +22,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwaggerDocumentaion();
 
 app.UseCors("AngularAppPolicy");
 

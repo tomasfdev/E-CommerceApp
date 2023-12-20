@@ -10,7 +10,7 @@ namespace Infrastructure.Data
         private readonly IDatabase _database;
         public BasketRepository(IConnectionMultiplexer redis)
         {
-            _database = redis.GetDatabase();    //db connection
+            _database = redis.GetDatabase();    //redis db connection
         }
 
         public Task<bool> DeleteBasketAsync(string BasketId)
