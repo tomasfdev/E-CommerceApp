@@ -3,13 +3,10 @@ using API.Errors;
 using API.Extensions;
 using AutoMapper;
 using Core.Interfaces;
-using Core.Models;
 using Core.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace API.Controllers
 {

@@ -14,7 +14,9 @@ export class LoadingInterceptor implements HttpInterceptor {
   constructor(private busyService: BusyService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    this.busyService.busy(); //antes de fazer request À API faz LOADING
+    if (!request.url.includes('emailexists')) {
+      this.busyService.busy(); //antes de fazer request À API faz LOADING
+    }
     return next.handle(request).pipe(
       delay(1000),
       finalize(() => this.busyService.idle())  //dps request hide LOADING
