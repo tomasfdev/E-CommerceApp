@@ -13,7 +13,7 @@ namespace Core.Models.Identity
         #region AppUser 1-1 Address
         [Required]
         public string AppUserId { get; set; }
-        public AppUser AppUser { get; set; }
+        public virtual AppUser AppUser { get; set; }
         #endregion
     }
 }

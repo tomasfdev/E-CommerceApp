@@ -14,6 +14,22 @@ namespace Infrastructure.Data
             _context = context;
         }
 
+        public void Add(T entity)
+        {
+            _context.Set<T>().Add(entity);  //track new entity
+        }
+
+        public void Update(T entity)
+        {
+            _context.Set<T>().Attach(entity);
+            _context.Entry(entity).State = EntityState.Modified;    //marks the entity as modified and because it's being track, it's added to the list of things that need to be saved when SaveChangesAsync()
+        }
+
+        public void Delete(T entity)
+        {
+            _context.Set<T>().Remove(entity);
+        }
+
         public async Task<int> CountAsync(ISpecification<T> spec)
         {
             return await ApplySpecification(spec).CountAsync();
