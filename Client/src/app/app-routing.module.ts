@@ -17,8 +17,13 @@ const routes: Routes = [
   { 
     path: 'checkout', 
     canActivate: [AuthGuard],
-    loadChildren: () => import('./checkout/checkout.module').then(m => m.CheckoutModule) 
-  }, //lazy loading !
+    loadChildren: () => import('./checkout/checkout.module').then(m => m.CheckoutModule)  //lazy loading !
+  }, 
+  { 
+    path: 'orders', 
+    canActivate: [AuthGuard],
+    loadChildren: () => import('./orders/orders.module').then(m => m.OrdersModule)  //lazy loading !
+  },
   { path: 'account', loadChildren: () => import('./account/account.module').then(m => m.AccountModule) }, //lazy loading !
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
