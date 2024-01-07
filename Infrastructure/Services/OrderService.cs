@@ -35,15 +35,28 @@ namespace Infrastructure.Services
 
             var subtotal = products.Sum(product => product.Price * product.Quantity);
 
-            var order = new Order(products, buyerEmail, shipToAddress, deliveryMethod, subtotal);   //create order
+            var spec = new OrderByPaymentIntentIdSpec(basket.PaymentIntentId);  //get order spec(get order with PaymentIntentId == paymentIntentId)
+            var order = await _uow.Repository<Order>().GetEntityWithSpecAsync(spec);    //get specific order
 
-            _uow.Repository<Order>().Add(order);    //create order
+            if (order is not null)  //check if order exists
+            {
+                //update order props 
+                order.ShipToAddress = shipToAddress;
+                order.DeliveryMethod = deliveryMethod;
+                order.Subtotal = subtotal;
+                _uow.Repository<Order>().Update(order); //update order
+            }
+            else //order doesn't exists
+            {
+                order = new Order(products, buyerEmail, shipToAddress, deliveryMethod, subtotal, basket.PaymentIntentId);   //create order
+                _uow.Repository<Order>().Add(order);    //create order
+            }
 
             var result = await _uow.Complete(); //save to db
 
             if (result <= 0) return null;   //if didn't save to db return null and let the order controller send the error response
 
-            await _basketRepo.DeleteBasketAsync(baskedId);  //delete basket because order is saved/complete
+            //await _basketRepo.DeleteBasketAsync(baskedId);  //delete basket because order is saved/complete
 
             return order;
         }

@@ -9,13 +9,14 @@ namespace Core.Models.Order
         {
         }
 
-        public Order(IReadOnlyList<OrderProduct>? orderProducts, string? buyerEmail, Address? shipToAddress, DeliveryMethod? deliveryMethod, decimal subtotal)
+        public Order(IReadOnlyList<OrderProduct>? orderProducts, string? buyerEmail, Address? shipToAddress, DeliveryMethod? deliveryMethod, decimal subtotal, string? paymentIntentId)
         {
             OrderProducts = orderProducts;
             BuyerEmail = buyerEmail;
             ShipToAddress = shipToAddress;
             DeliveryMethod = deliveryMethod;
             Subtotal = subtotal;
+            PaymentIntentId = paymentIntentId;
         }
 
         public string? BuyerEmail { get; set; }

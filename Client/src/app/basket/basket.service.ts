@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Basket, BasketItem, BasketTotals } from '../shared/Models/basket';
 import { HttpClient } from '@angular/common/http';
@@ -15,7 +15,6 @@ export class BasketService {
   basketSource$ = this.basketSource.asObservable(); //components will be able to subscribe to this and get the information.When it changes it will update the template correctly
   private basketTotalSource = new BehaviorSubject<BasketTotals | null>(null);
   basketTotalSource$ = this.basketTotalSource.asObservable();
-  shipping = 0;
 
   constructor(private http: HttpClient) {}
 
@@ -77,8 +76,20 @@ export class BasketService {
   }
 
   setShippingPrice(deliveryMethod: DeliveryMethod) {
-    this.shipping = deliveryMethod.price;
-    this.calculateTotals();
+    const basket = this.getCurrentBasketValue();
+    if (basket) {
+      basket.shippingPrice = deliveryMethod.price;
+      basket.deliveryMethodId = deliveryMethod.id;
+      this.setBasket(basket);
+    }
+  }
+
+  createPaymentIntent() {
+    return this.http.post<Basket>(this.ApiUrl + 'payment/' + this.getCurrentBasketValue()?.id, {}).pipe(
+      map(response => {
+        this.basketSource.next(response);
+      })
+    )
   }
 
   private createBasket(): Basket {
@@ -125,10 +136,8 @@ export class BasketService {
     if (!basket) return;
     const subtotal = basket.items.reduce(
       (totalItemsPrice, ItemPrice) =>
-        ItemPrice.price * ItemPrice.quantity + totalItemsPrice,
-      0
-    ); //multiplica o preço do item pela sua quantidade e soma ao total
-    const total = subtotal + this.shipping;
-    this.basketTotalSource.next({ shipping: this.shipping, total, subtotal });
+        (ItemPrice.price * ItemPrice.quantity) + totalItemsPrice, 0); //multiplica o preço do item pela sua quantidade e soma ao total
+    const total = subtotal + basket.shippingPrice;
+    this.basketTotalSource.next({ shipping: basket.shippingPrice, total, subtotal });
   }
 }

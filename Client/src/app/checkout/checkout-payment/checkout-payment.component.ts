@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { CheckoutService } from '../checkout.service';
 import { FormGroup } from '@angular/forms';
 import { BasketService } from 'src/app/basket/basket.service';
@@ -6,14 +6,29 @@ import { ToastrService } from 'ngx-toastr';
 import { Basket } from 'src/app/shared/Models/basket';
 import { Address } from 'src/app/shared/Models/user';
 import { NavigationExtras, Router } from '@angular/router';
+import { Stripe, StripeCardCvcElement, StripeCardExpiryElement, StripeCardNumberElement, loadStripe } from '@stripe/stripe-js';
+import { firstValueFrom } from 'rxjs';
+import { OrderToCreate } from 'src/app/shared/Models/order';
 
 @Component({
   selector: 'app-checkout-payment',
   templateUrl: './checkout-payment.component.html',
   styleUrls: ['./checkout-payment.component.scss'],
 })
-export class CheckoutPaymentComponent {
+export class CheckoutPaymentComponent implements OnInit {
   @Input() checkoutForm?: FormGroup;
+  @ViewChild('cardNumber') cardNumberElement?: ElementRef;  //get access to #cardNumber from CheckoutPaymentComponent.html
+  @ViewChild('cardExpiry') cardExpiryElement?: ElementRef;
+  @ViewChild('cardCvc') cardCvcElement?: ElementRef;
+  stripe: Stripe | null = null;
+  cardNumber?: StripeCardNumberElement;
+  cardExpiry?: StripeCardExpiryElement;
+  cardCvc?: StripeCardCvcElement;
+  cardNumberComplete = false;
+  cardExpiryComplete = false;
+  cardCvcComplete = false;
+  cardErrors: any;
+  loading = false;
 
   constructor(
     private basketService: BasketService,
@@ -22,29 +37,93 @@ export class CheckoutPaymentComponent {
     private router: Router
   ) {}
 
-  submitOrder() {
-    const basket = this.basketService.getCurrentBasketValue();
-    if (!basket) return;
-    const orderToCreate = this.getOrderToCreate(basket);
-    if (!orderToCreate) return;
-    this.checkoutService.createOrder(orderToCreate).subscribe({
-      next: response => {
-        this.toastr.success('Order created successfully');
-        this.basketService.deleteLocalBasket();
-        const navigationExtras: NavigationExtras = {state: response};
-        this.router.navigate(['checkout/success'], navigationExtras);
+  ngOnInit(): void {
+    loadStripe('pk_test_51OU6f8K6jjGdbK0rF6TMZC77CdAWrUHJYQAzKdlfdwtOzHymrFnU9DKFwhu8E2Kc9aR07kK3V5j8YSrasn23EVXQ00p4u4IZQ4').then(response => {
+      this.stripe = response;
+      const elements = response?.elements();
+      if (elements) {
+        this.cardNumber = elements.create('cardNumber');
+        this.cardNumber.mount(this.cardNumberElement?.nativeElement);
+        this.cardNumber.on('change', event => { //on 'change' return event
+          this.cardNumberComplete = event.complete; //when "event" is complete("event.complete") return true, and "cardNumberComplete" will be true
+          if (event.error) this.cardErrors = event.error.message; //if event has error cardErrors = event.error.message
+          else this.cardErrors = null;  //else cardErrors = null
+        })
+
+        this.cardExpiry = elements.create('cardExpiry');
+        this.cardExpiry.mount(this.cardExpiryElement?.nativeElement);
+        this.cardExpiry.on('change', event => {
+          this.cardExpiryComplete = event.complete;
+          if (event.error) this.cardErrors = event.error.message;
+          else this.cardErrors = null;
+        })
+        
+        this.cardCvc = elements.create('cardCvc');
+        this.cardCvc.mount(this.cardCvcElement?.nativeElement);
+        this.cardCvc.on('change', event => {
+          this.cardCvcComplete = event.complete;
+          if (event.error) this.cardErrors = event.error.message;
+          else this.cardErrors = null;
+        })
       }
     })
   }
 
-  private getOrderToCreate(basket: Basket) {
+  async submitOrder() {
+    this.loading = true;
+    const basket = this.basketService.getCurrentBasketValue();  //get basket
+    if (!basket) throw new Error("Cannot get basket");  //check basket
+
+    try {
+      const createdOrder = await this.createOrder(basket);  //create order
+      const paymentResult = await this.confirmPaymentWithStripe(basket);  //stripe payment
+      if (paymentResult.paymentIntent) { //check card payment confirmation
+        this.basketService.deleteBasket(basket); //delete basket
+        const navigationExtras: NavigationExtras = {state: createdOrder};
+        this.router.navigate(['checkout/success'], navigationExtras);
+      } else {
+        this.toastr.error(paymentResult.error.message); //stripe errors
+      }
+    } catch (error: any) {
+      console.log(error);
+      this.toastr.error(error.message); //client errors
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private async createOrder(basket: Basket | null) {
+    if (!basket) throw new Error('Basket is null');
+    const orderToCreate = this.getOrderToCreate(basket);
+    return firstValueFrom(this.checkoutService.createOrder(orderToCreate));
+  }
+
+  private async confirmPaymentWithStripe(basket: Basket | null) {
+    if (!basket) throw new Error('Basket is null');
+    const paymentResult = this.stripe?.confirmCardPayment(basket.clientSecret!, {
+      payment_method: {
+        card: this.cardNumber!,
+        billing_details: {
+          name: this.checkoutForm?.get('paymentForm')?.get('nameOnCard')?.value
+        }
+      }
+    });
+    if (!paymentResult) throw new Error('Problem attempting payment with stripe');
+    return paymentResult;
+  }
+
+  private getOrderToCreate(basket: Basket): OrderToCreate {
     const deliveryMethodId = this.checkoutForm?.get('deliveryForm')?.get('deliveryMethod')?.value;
     const shipToAddress = this.checkoutForm?.get('addressForm')?.value as Address;
-    if (!deliveryMethodId || !shipToAddress) return;
+    if (!deliveryMethodId || !shipToAddress) throw new Error('Problem with basket');
     return {
       basketId: basket.id,
       deliveryMethodId: deliveryMethodId,
       shipToAddress: shipToAddress
     }
+  }
+
+  get paymentFormComplete() {
+    return this.checkoutForm?.get('paymentForm')?.valid && this.cardNumberComplete && this.cardExpiryComplete && this.cardCvcComplete //get paymentForm validated/complete
   }
 }

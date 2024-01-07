@@ -13,11 +13,16 @@ export interface BasketItem {
 export interface Basket {
   id: string;
   items: BasketItem[];
+  deliveryMethodId?: number;
+  clientSecret?: string;
+  paymentIntentId?: string;
+  shippingPrice: number;
 }
 
 export class Basket implements Basket {
   id = cuid(); //gives unique/random string
   items: BasketItem[] = [];
+  shippingPrice = 0;
 }
 
 export interface BasketTotals {
