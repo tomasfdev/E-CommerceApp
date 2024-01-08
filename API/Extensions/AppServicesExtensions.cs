@@ -25,11 +25,12 @@ namespace API.Extensions
 
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IBasketRepository, BasketRepository>();
-            services.AddScoped<ITokenService, TokenService>();
-            services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddSingleton<IResponseCacheService, ResponseCacheService>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.Configure<ApiBehaviorOptions>(options =>

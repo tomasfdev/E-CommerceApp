@@ -35,7 +35,7 @@ export class TestErrorComponent {
   }
 
   get400ValidationError() {
-    this.http.get(this.apiUrl + 'products/menosum').subscribe({
+    this.http.get(this.apiUrl + 'products/wrongData').subscribe({
       next: (response) => console.log(response),
       error: (error) => {
         console.log(error);
